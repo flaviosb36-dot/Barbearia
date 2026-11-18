@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#121212">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>BarberAgenda Mobile</title>
+  <style>
+    :root {
+      --bg: #121212;
+      --surface: #1e1e1e;
+      --surface-light: #2a2a2a;
+      --primary: #d4af37;
+      --primary-dark: #b5952f;
+      --text: #f5f5f5;
+      --text-muted: #a0a0a0;
+      --success: #25d366;
+      --danger: #e53935;
+      --border: #333333;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 80px; }
+
+    /* Header */
+    header {
+      background: var(--surface);
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header h1 { font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    .mode-switch {
+      background: var(--surface-light);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    /* Container */
+    .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* Cards & Forms */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .card h2 { font-size: 1rem; margin-bottom: 12px; color: var(--primary); }
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      background: var(--surface-light);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--primary); }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: 0.2s;
+    }
+    .btn-primary { background: var(--primary); color: #000; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-whatsapp { background: var(--success); color: #000; margin-top: 8px; }
+    .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); margin-top: 8px; }
+    .btn-sm { padding: 6px 10px; font-size: 0.8rem; width: auto; }
+    .btn-danger { background: var(--danger); color: #fff; }
+
+    /* Horários Grid */
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .slot {
+      padding: 10px 4px;
+      text-align: center;
+      background: var(--surface-light);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .slot.selected { background: var(--primary); color: #000; font-weight: bold; border-color: var(--primary); }
+    .slot.booked { opacity: 0.35; text-decoration: line-through; pointer-events: none; }
+
+    /* List Items */
+    .item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .item-row:last-child { border-bottom: none; }
+    .item-info h4 { font-size: 0.95rem; }
+    .item-info p { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+    .badge {
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      background: var(--surface-light);
+      color: var(--primary);
+    }
+    .badge.done { background: rgba(37, 211, 102, 0.15); color: var(--success); }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .stat-box { background: var(--surface); border: 1px solid var(--border); padding: 14px; border-radius: 12px; text-align: center; }
+    .stat-box span { font-size: 0.8rem; color: var(--text-muted); }
+    .stat-box strong { display: block; font-size: 1.3rem; color: var(--primary); margin-top: 4px; }
+
+    /* Bottom Navigation */
+    nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+      z-index: 20;
+    }
+    nav button {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+    nav button.active { color: var(--primary); font-weight: 600; }
+    nav button span.icon { font-size: 1.2rem; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>✂️ BarberAgenda</h1>
+    <button class="mode-switch" id="modeBtn" onclick="toggleClientMode()">Visão Cliente</button>
+  </header>
+
+  <div class="container">
+    <!-- ABA 1: AGENDAR (PÚBLICO / CLIENTE) -->
+    <div id="tab-agendar" class="section active">
+      <div class="card">
+        <h2>Novo Agendamento</h2>
+        <div class="form-group">
+          <label>Seu Nome</label>
+          <input type="text" id="cliNome" placeholder="Ex: João Silva">
+        </div>
+        <div class="form-group">
+          <label>WhatsApp (com DDD)</label>
+          <input type="tel" id="cliZap" placeholder="Ex: 84999999999">
+        </div>
+        <div class="form-group">
+          <label>Serviço</label>
+          <select id="cliServico"></select>
+        </div>
+        <div class="form-group">
+          <label>Data</label>
+          <input type="date" id="cliData" onchange="renderSlots()">
+        </div>
+        <div class="form-group">
+          <label>Horário Disponível</label>
+          <div class="slots-grid" id="slotsGrid"></div>
+        </div>
+        <button class="btn btn-primary" onclick="confirmarAgendamento()">Confirmar Agendamento</button>
+        <button class="btn btn-outline" id="shareLinkBtn" onclick="compartilharLink()">Compartilhar Link de Agendamento</button>
+      </div>
+    </div>
+
+    <!-- ABA 2: AGENDA DO BARBEIRO -->
+    <div id="tab-agenda" class="section">
+      <div class="card">
+        <h2>Agendamentos</h2>
+        <div class="form-group">
+          <input type="date" id="filtroData" onchange="renderAgenda()">
+        </div>
+        <div id="listaAgenda"></div>
+      </div>
+    </div>
+
+    <!-- ABA 3: SERVIÇOS -->
+    <div id="tab-servicos" class="section">
+      <div class="card">
+        <h2>Adicionar Serviço</h2>
+        <div class="form-group">
+          <label>Nome do Serviço</label>
+          <input type="text" id="srvNome" placeholder="Ex: Corte Degradê + Barba">
+        </div>
+        <div class="form-group">
+          <label>Preço (R$)</label>
+          <input type="number" id="srvPreco" placeholder="55.00" step="0.01">
+        </div>
+        <button class="btn btn-primary" onclick="addServico()">Salvar Serviço</button>
+      </div>
+      <div class="card">
+        <h2>Catálogo Atual</h2>
+        <div id="listaServicos"></div>
+      </div>
+    </div>
+
+    <!-- ABA 4: FINANCEIRO -->
+    <div id="tab-financeiro" class="section">
+      <div class="stats-grid">
+        <div class="stat-box">
+          <span>Faturamento Concluído</span>
+          <strong id="fatTotal">R$ 0,00</strong>
+        </div>
+        <div class="stat-box">
+          <span>Atendimentos</span>
+          <strong id="qtdAtendimentos">0</strong>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Relatórios</h2>
+        <button class="btn btn-primary" onclick="exportarExcel()">📊 Exportar Planilha (Excel/CSV)</button>
+      </div>
+      <div class="card">
+        <h2>Histórico Concluído</h2>
+        <div id="listaFinanceiro"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAVEGAÇÃO INFERIOR -->
+  <nav id="bottomNav">
+    <button class="active" onclick="switchTab('agendar', this)"><span class="icon">📅</span>Agendar</button>
+    <button onclick="switchTab('agenda', this)"><span class="icon">✂️</span>Agenda</button>
+    <button onclick="switchTab('servicos', this)"><span class="icon">💈</span>Serviços</button>
+    <button onclick="switchTab('financeiro', this)"><span class="icon">💰</span>Caixa</button>
+  </nav>
+
+  <script>
+    const HORARIOS_PADRAO = ["08:00", "08:40", "90:20", "10:00", "10:40", "11:20", "12:00", "14:30", "15:10", "15:50", "16:30", "17:10", "17:50", "18:30", "19:10"];
+    let horarioSelecionado = null;
+    let isClientOnly = false;
+
+    // Banco de Dados Local
+    let servicos = JSON.parse(localStorage.getItem('barber_servicos')) || [
+      { id: 1, nome: 'Corte Social / Degradê', preco: 35 },
+      { id: 2, nome: 'Barba Completa', preco: 25 },
+      { id: 3, nome: 'Combo Corte + Barba', preco: 55 },
+      { id: 4, nome: 'Sobrancelha', preco: 10 }
+    ];
+    let agendamentos = JSON.parse(localStorage.getItem('barber_agendamentos')) || [];
+
+    function salvarDados() {
+      localStorage.setItem('barber_servicos', JSON.stringify(servicos));
+      localStorage.setItem('barber_agendamentos', JSON.stringify(agendamentos));
+    }
+
+    // Inicialização
+    window.onload = () => {
+      const hoje = new Date().toISOString().split('T')[0];
+      document.getElementById('cliData').value = hoje;
+      document.getElementById('filtroData').value = hoje;
+
+      // Verifica se abriu via link de cliente (?cliente=1)
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('cliente') === '1') {
+        ativarModoCliente(true);
+      }
+
+      renderServicosSelect();
+      renderSlots();
+      renderAgenda();
+      renderServicosLista();
+      renderFinanceiro();
+    };
+
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('tab-' + tabId).classList.add('active');
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      if (tabId === 'agenda') renderAgenda();
+      if (tabId === 'financeiro') renderFinanceiro();
+    }
+
+    function toggleClientMode() {
+      ativarModoCliente(!isClientOnly);
+    }
+
+    function ativarModoCliente(ativar) {
+      isClientOnly = ativar;
+      document.getElementById('bottomNav').style.display = ativar ? 'none' : 'flex';
+      document.getElementById('shareLinkBtn').style.display = ativar ? 'none' : 'inline-flex';
+      document.getElementById('modeBtn').innerText = ativar ? 'Painel Barbeiro' : 'Visão Cliente';
+      switchTab('agendar', document.querySelector('nav button'));
+    }
+
+    function compartilharLink() {
+      const url = window.location.href.split('?')[0] + '?cliente=1';
+      const texto = encodeURIComponent(`Olá! Agende seu horário na barbearia pelo link: ${url}`);
+      window.open(`https://wa.me/?text=${texto}`, '_blank');
+    }
+
+    // Renderizar Serviços no Select
+    function renderServicosSelect() {
+      const select = document.getElementById('cliServico');
+      select.innerHTML = servicos.map(s => `<option value="${s.id}">${s.nome} - R$ ${s.preco.toFixed(2)}</option>`).join('');
+    }
+
+    // Renderizar Grade de Horários
+    function renderSlots() {
+      const data = document.getElementById('cliData').value;
+      const ocupados = agendamentos.filter(a => a.data === data && a.status !== 'cancelado').map(a => a.hora);
+      const grid = document.getElementById('slotsGrid');
+      horarioSelecionado = null;
+
+      grid.innerHTML = HORARIOS_PADRAO.map(hora => {
+        const isBooked = ocupados.includes(hora);
+        return `<div class="slot ${isBooked ? 'booked' : ''}" onclick="selecionarHorario(this, '${hora}')">${hora}</div>`;
+      }).join('');
+    }
+
+    function selecionarHorario(el, hora) {
+      document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+      el.classList.add('selected');
+      horarioSelecionado = hora;
+    }
+
+    // Confirmar Agendamento
+    function confirmarAgendamento() {
+      const nome = document.getElementById('cliNome').value.trim();
+      const zap = document.getElementById('cliZap').value.replace(/\D/g, '');
+      const srvId = parseInt(document.getElementById('cliServico').value);
+      const data = document.getElementById('cliData').value;
+
+      if (!nome || !zap || !data || !horarioSelecionado) {
+        alert('Preencha nome, WhatsApp, data e escolha um horário!');
+        return;
+      }
+
+      const srv = servicos.find(s => s.id === srvId);
+      const novo = {
+        id: Date.now(),
+        cliente: nome,
+        whatsapp: zap,
+        servico: srv.nome,
+        valor: srv.preco,
+        data: data,
+        hora: horarioSelecionado,
+        status: 'agendado'
+      };
+
+      agendamentos.push(novo);
+      salvarDados();
+      renderSlots();
+      renderAgenda();
+
+      document.getElementById('cliNome').value = '';
+      document.getElementById('cliZap').value = '';
+      alert(`Agendamento confirmado para ${data.split('-').reverse().join('/')} às ${novo.hora}!`);
+    }
+
+    // Renderizar Agenda do Barbeiro
+    function renderAgenda() {
+      const dataFiltro = document.getElementById('filtroData').value;
+      const lista = document.getElementById('listaAgenda');
+      const filtrados = agendamentos
+        .filter(a => a.data === dataFiltro)
+        .sort((a, b) => a.hora.localeCompare(b.hora));
+
+      if (!filtrados.length) {
+        lista.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">Nenhum agendamento para esta data.</p>';
+        return;
+      }
+
+      lista.innerHTML = filtrados.map(a => `
+        <div class="item-row">
+          <div class="item-info">
+            <h4>${a.hora} - ${a.cliente}</h4>
+            <p>${a.servico} • R$ ${a.valor.toFixed(2)}</p>
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            ${a.status === 'agendado' ? `
+              <button class="btn btn-sm btn-primary" onclick="concluirAgendamento(${a.id})" title="Concluir">✓</button>
+              <button class="btn btn-sm" style="background:var(--success); color:#000;" onclick="enviarZapCliente('${a.whatsapp}', '${a.cliente}', '${a.data}', '${a.hora}')" title="WhatsApp">💬</button>
+              <button class="btn btn-sm btn-danger" onclick="excluirAgendamento(${a.id})" title="Cancelar">✕</button>
+            ` : `<span class="badge done">Concluído</span>`}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function enviarZapCliente(zap, nome, data, hora) {
+      const dataBr = data.split('-').reverse().join('/');
+      const msg = encodeURIComponent(`Olá ${nome}! Confirmando seu horário na barbearia dia ${dataBr} às ${hora}.`);
+      window.open(`https://wa.me/55${zap}?text=${msg}`, '_blank');
+    }
+
+    function concluirAgendamento(id) {
+      const idx = agendamentos.findIndex(a => a.id === id);
+      if (idx > -1) {
+        agendamentos[idx].status = 'concluido';
+        salvarDados();
+        renderAgenda();
+        renderFinanceiro();
+      }
+    }
+
+    function excluirAgendamento(id) {
+      if (!confirm('Cancelar este agendamento?')) return;
+      agendamentos = agendamentos.filter(a => a.id !== id);
+      salvarDados();
+      renderAgenda();
+      renderSlots();
+    }
+
+    // Gerenciar Serviços
+    function addServico() {
+      const nome = document.getElementById('srvNome').value.trim();
+      const preco = parseFloat(document.getElementById('srvPreco').value);
+      if (!nome || isNaN(preco)) return alert('Preencha nome e valor válido.');
+
+      servicos.push({ id: Date.now(), nome, preco });
+      salvarDados();
+      document.getElementById('srvNome').value = '';
+      document.getElementById('srvPreco').value = '';
+      renderServicosSelect();
+      renderServicosLista();
+    }
+
+    function removerServico(id) {
+      servicos = servicos.filter(s => s.id !== id);
+      salvarDados();
+      renderServicosSelect();
+      renderServicosLista();
+    }
+
+    function renderServicosLista() {
+      const lista = document.getElementById('listaServicos');
+      lista.innerHTML = servicos.map(s => `
+        <div class="item-row">
+          <div class="item-info">
+            <h4>${s.nome}</h4>
+            <p>R$ ${s.preco.toFixed(2)}</p>
+          </div>
+          <button class="btn btn-sm btn-danger" onclick="removerServico(${s.id})">Excluir</button>
+        </div>
+      `).join('');
+    }
+
+    // Financeiro & Exportação Excel
+    function renderFinanceiro() {
+      const concluidos = agendamentos.filter(a => a.status === 'concluido');
+      const total = concluidos.reduce((acc, cur) => acc + cur.valor, 0);
+
+      document.getElementById('fatTotal').innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
+      document.getElementById('qtdAtendimentos').innerText = concluidos.length;
+
+      const lista = document.getElementById('listaFinanceiro');
+      lista.innerHTML = concluidos.slice().reverse().map(a => `
+        <div class="item-row">
+          <div class="item-info">
+            <h4>${a.cliente} - ${a.servico}</h4>
+            <p>${a.data.split('-').reverse().join('/')} às ${a.hora}</p>
+          </div>
+          <strong style="color:var(--success)">+ R$ ${a.valor.toFixed(2)}</strong>
+        </div>
+      `).join('') || '<p style="color:var(--text-muted); font-size:0.9rem;">Nenhum atendimento concluído.</p>';
+    }
+
+    function exportarExcel() {
+      if (!agendamentos.length) return alert('Sem dados para exportar.');
+      let csv = '\uFEFFData;Hora;Cliente;WhatsApp;Servico;Valor;Status\n';
+      agendamentos.forEach(a => {
+        csv += `${a.data};${a.hora};${a.cliente};${a.whatsapp};${a.servico};${a.valor.toFixed(2).replace('.', ',')};${a.status}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `relatorio-barbearia-${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+    }
+  </script>
+</body>
+</html>
